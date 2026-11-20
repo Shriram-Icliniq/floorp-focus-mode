@@ -77,7 +77,7 @@ check('navigation/page load reveals address bar',js("return FocusMode.state.last
 js("FocusMode.state.lastActivity=null;gBrowser.selectedBrowser.reload();")
 wait(.5)
 check('actual reload reveals address bar',js("return FocusMode.state.lastActivity==='document navigation' && document.documentElement.hasAttribute('focus-address-visible');"))
-check('actual reload also reveals temporary tabs',js("return FocusMode.state.lastTabActivity==='page load/reload' && document.documentElement.hasAttribute('focus-tabs-overlay');"))
+check('actual reload also reveals temporary tabs',js("return FocusMode.state.lastTabActivity==='document navigation' && document.documentElement.hasAttribute('focus-tabs-overlay');"))
 js("Services.prefs.setBoolPref('sidebar.verticalTabs',true);")
 wait(2.4)
 check('native vertical layout is detected',js("return gBrowser.tabContainer.verticalMode && document.documentElement.hasAttribute('focus-vertical');"))

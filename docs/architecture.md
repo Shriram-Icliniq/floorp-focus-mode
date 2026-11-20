@@ -37,9 +37,9 @@ Temporary horizontal tabs and the navbar stack as overlays. Temporary vertical t
 
 ## Document navigation peeks
 
-A per-window tabs-progress listener receives the originating browser explicitly. A weak set tracks active top-level network loads per browser. The first network START peeks the address bar only if that browser is selected; network STOP clears the load marker without revealing it. Intermediate location callbacks never reveal the address bar. This keeps same-document fragments and History API updates quiet, and gives a server redirect chain one original timer rather than a fresh peek for every address or completion event.
+A per-window tabs-progress listener receives the originating browser explicitly. A weak set tracks active top-level network loads per browser. The first network START peeks the address bar and tabs only if that browser is selected; network STOP clears the load marker without revealing it. Location callbacks never reveal either bar. This keeps same-document fragments and History API updates quiet, and gives a server redirect chain one original reveal per bar rather than a fresh peek for every address or completion event.
 
-Background loads update their bookkeeping without revealing over the selected tab. Subframes are ignored. A later separate document load gets another peek, including reload and different-document Back/Forward. Tab activity remains a separate trigger, and temporary tab overlays retain their existing location/load behavior. Explicit address focus still holds the bar and starts a grace period on blur.
+Background loads update their bookkeeping without revealing over the selected tab. Subframes are ignored. A later separate document load gets another peek, including reload and different-document Back/Forward. Tab activity remains a separate trigger. Both temporary bars now use the same document-load threshold; neither reveals for same-document URL changes or load completion. Explicit address focus still holds the bar and starts a grace period on blur.
 
 ## Ranking and recency
 

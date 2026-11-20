@@ -33,6 +33,8 @@ with tempfile.TemporaryDirectory(prefix='floorp-public-tests-') as temporary:
     suites = ['test_navigation_peek.py'] if args.navigation_only else ['test_command_line.py', 'test_address_separator.py', 'test_navigation_peek.py']
     for suite in suites:
         subprocess.run([sys.executable, str(ROOT / suite)], env=env, check=True)
+    subprocess.run([sys.executable, str(ROOT / 'test_navigation_peek.py')], env={**env, 'FLOORP_TEST_VERTICAL':'1'}, check=True)
     names = ['navigation-peek-results.json'] if args.navigation_only else ['command-line-results.json', 'test-results.json', 'tabs-overlay-results.json', 'address-separator-results.json', 'navigation-peek-results.json']
+    names.append('navigation-peek-vertical-results.json')
     results = {name: json.loads((ROOT / name).read_text())['passed'] for name in names}
     print(json.dumps({'passed': sum(results.values()), 'suites': results}, indent=2))

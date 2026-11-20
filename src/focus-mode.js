@@ -203,25 +203,23 @@
     listen(document, event, () => window.setTimeout(refreshFocus, 0), true);
   const documentLoads = new WeakSet();
   const progress = {
-    onLocationChange(browser, webProgress) {
-      if (browser === gBrowser.selectedBrowser && webProgress?.isTopLevel)
-        revealTabs("navigation");
-    },
     onStateChange(browser, webProgress, request, flags) {
       const W = Ci.nsIWebProgressListener;
       if (webProgress?.isTopLevel && (flags & W.STATE_IS_NETWORK) &&
           (flags & (W.STATE_START | W.STATE_STOP))) {
         // A network START/STOP pair spans a document load, including its HTTP
         // redirects. URL text changes and load completion never restart the
-        // address timer. Track background loads without revealing their UI.
+        // bar timers. Track background loads without revealing their UI.
         if (flags & W.STATE_START) {
           if (!documentLoads.has(browser)) {
             documentLoads.add(browser);
-            if (browser === gBrowser.selectedBrowser) reveal("document navigation");
+            if (browser === gBrowser.selectedBrowser) {
+              reveal("document navigation");
+              revealTabs("document navigation");
+            }
           }
         }
         if (flags & W.STATE_STOP) documentLoads.delete(browser);
-        if (browser === gBrowser.selectedBrowser) revealTabs("page load/reload");
       }
     },
     QueryInterface: ChromeUtils.generateQI(["nsIWebProgressListener", "nsISupportsWeakReference"]),
