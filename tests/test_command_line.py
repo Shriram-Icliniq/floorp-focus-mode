@@ -74,18 +74,28 @@ try:
   command('unknown');check('unknown command stays open',opened());context('chrome');keys('\ue00c')
   command('address peek');command('address hide');context('chrome');check('address hide immediately clears temporary reveal',js('return !FocusMode.state.temporary && !document.documentElement.hasAttribute("focus-address-visible");'))
   command('tabs peek');command('tabs hide');context('chrome');check('tabs hide immediately clears temporary reveal',js('return !FocusMode.state.tabsTemporary && !document.documentElement.hasAttribute("focus-tabs-visible");'))
-  # Genuine trusted keystrokes must remain inside the editable element.
   for selector in ['#text','#password','#area','#editable','#role','#select']:
    context('chrome');js('gBrowser.selectedBrowser.focus();');pagefocus(selector);keys(':')
-   check('colon ignored in '+selector,not opened())
-   if selector in ['#text','#password','#area']:
-    context('content');check('colon reaches '+selector,js('return document.activeElement.value.includes(":");'))
+   check('colon opens in '+selector,opened())
+   keys('\ue00c')
+   if selector in ['#text','#password','#area','#editable']:
+    context('content');check('colon stays out of '+selector,js('const node=document.querySelector('+json.dumps(selector)+'); return !(node.value ?? node.textContent).includes(":");'))
   context('content');js('document.querySelector("#shadow").click();');keys(':')
-  check('closed shadow input retains colon',not opened())
+  check('colon opens in a closed shadow input',opened());keys('\ue00c')
   context('content');m.cmd('WebDriver:SwitchToFrame',{'id':0});js('document.getElementById("nested").focus();');keys(':')
-  check('frame input retains colon',not opened())
+  check('colon opens in a frame input',opened());keys('\ue00c')
   context('content');js('document.getElementById("plain").focus();');keys(':');check('frame ordinary button opens command line',opened())
-  context('chrome');keys('\ue00c');context('content');m.cmd('WebDriver:SwitchToFrame',{'id':None})
+  keys('\ue00c');context('content');m.cmd('WebDriver:SwitchToFrame',{'id':None})
+  js("""document.querySelector('#button').focus();
+    window.addEventListener('keydown', event => {
+      if (event.key !== ':') return;
+      const input = document.querySelector('#text');
+      input.focus();
+      input.value += event.key;
+      event.preventDefault();
+    }, {capture: true});""")
+  keys(':');check('colon opens before the page redirects it into an input',opened());keys('\ue00c')
+  context('content');check('page shortcut handler never received colon',js('return document.querySelector("#text").value === "";'))
   context('chrome');js('gURLBar.focus();');keys(':');check('address-bar typing does not open command line',not opened())
   openline();context('chrome');js('document.getElementById("focus-command-input").value="tabs";document.getElementById("focus-command-input").dispatchEvent(new Event("input"));')
   keys('\ue015');context('chrome');chosen=js('return document.querySelector(\'.focus-command-option[aria-selected="true"] strong\').textContent;');keys('\ue004');context('chrome');check('Down selects and Tab completes',js('return document.getElementById("focus-command-input").value;')==chosen)
@@ -119,12 +129,10 @@ try:
   # Browser shortcuts resume outside command mode in a disposable tab.
   context('content');old=m.cmd('WebDriver:GetWindowHandle',{});old=old.get('value',old);new=m.cmd('WebDriver:NewWindow',{'type':'tab'});new=new.get('value',new);m.cmd('WebDriver:SwitchToWindow',{'handle':new['handle']});context('chrome');js('gBrowser.selectedBrowser.focus();');chord('w');time.sleep(.2);m.cmd('WebDriver:SwitchToWindow',{'handle':old});context('chrome');check('Ctrl+W outside command mode closes its tab',js('return gBrowser.tabs.length;')==count)
   if vimium_xpi:
-   # Vimium's real link hints consume the key before the system-group actor.
    context('chrome');check('Vimium installed in disposable profile',js('return Services.prefs.getStringPref("extensions.webextensions.uuids", "").includes("vimium-c@gdh1995.cn");'))
    context('chrome');js('gBrowser.selectedBrowser.focus();');context('content');js('document.activeElement.blur();');keys('f');keys(':')
-   check('Vimium hints keep their key ownership',not opened())
-   keys('\ue00c');keys('i');keys(':');check('Vimium explicit insert mode retains colon',not opened())
-   keys('\ue00c')
+   check('colon opens while Vimium hints are active',opened());keys('\ue00c');keys('\ue00c')
+   keys('i');keys(':');check('colon opens in Vimium insert mode',opened());keys('\ue00c');keys('\ue00c')
   openline();context('chrome');js('gURLBar.focus();');time.sleep(.1);check('moving focus to browser UI dismisses command line',not opened())
  # A small blank PDF exercises the built-in viewer's resource document.
  objects=[b'<< /Type /Catalog /Pages 2 0 R >>',b'<< /Type /Pages /Kids [3 0 R] /Count 1 >>',b'<< /Type /Page /Parent 2 0 R /MediaBox [0 0 400 400] /Resources << >> >>']
@@ -136,7 +144,18 @@ try:
  context('chrome');extension_id=json.loads(js('return Services.prefs.getStringPref("extensions.webextensions.uuids");')).get('vimium-c@gdh1995.cn')
  context('chrome');js("window.addEventListener('keydown',e=>{window.__tabLastKey={key:e.key,target:e.target.localName,uri:e.target.ownerDocument.documentURI};},true);")
  # The same shortcut must work across tab protocols and browser process types.
- destinations=['about:blank','about:newtab','about:preferences','about:addons','about:config','about:support', 'data:text/html,<title>Data tab</title><p>Data tab</p>',page.as_uri(), 'chrome://global/content/aboutAbout.html', 'view-source:'+url,url.replace('fixture.html','fixture.pdf')]
+ context('content');m.cmd('WebDriver:Navigate',{'url':'about:preferences'});time.sleep(.5)
+ js('document.querySelector("#searchInput").focus();');keys(':')
+ check('colon opens from focused Settings search',opened());keys('\ue00c')
+ context('content')
+ m.cmd('WebDriver:PerformActions',{'actions':[{'type':'key','id':'command-keys','actions':[
+  {'type':'keyDown','value':'\ue009'},{'type':'keyDown','value':'\ue008'},
+  {'type':'keyDown','value':'.'},{'type':'keyUp','value':'.'},
+  {'type':'keyUp','value':'\ue008'},{'type':'keyUp','value':'\ue009'},
+ ]}]});time.sleep(.12)
+ check('Ctrl+Shift+Period opens from Settings search',opened())
+ keys('\ue00c')
+ destinations=['about:about','about:hub','about:keyboard','about:blank','about:newtab','about:preferences','about:addons','about:config','about:support', 'data:text/html,<title>Data tab</title><p>Data tab</p>',page.as_uri(), 'chrome://global/content/aboutAbout.html', 'view-source:'+url,url.replace('fixture.html','fixture.pdf')]
  if extension_id:destinations.append('moz-extension://'+extension_id+'/pages/options.html')
  for destination in destinations:
   context('content');m.cmd('WebDriver:Navigate',{'url':destination});time.sleep(.5)

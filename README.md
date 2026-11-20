@@ -94,7 +94,8 @@ Both bars use the same navigation threshold. Their default peek lasts two second
 
 ## Command-line behavior
 
-- `:` opens the command line when you are browsing rather than typing. It overlays the bottom of the page without shifting it.
+- `:` opens the command line from tab content, including when a text field has focus. It overlays the bottom of the page without shifting it.
+- On `about:` pages, **Ctrl+Shift+Period** also opens the command line as an alternate shortcut.
 - **Enter executes the highlighted suggestion**, including with an empty or incomplete query. If nothing matches, the line stays open for correction.
 - Empty input lists the most recently executed commands first. Only known command names are saved, separately per profile; raw search queries and page data are not stored.
 - Search is fuzzy and case-insensitive: `adr sh` finds `address show`; `tbpk` finds `tabs peek`. Match quality ranks first; recency breaks ties.
@@ -113,11 +114,11 @@ Both bars use the same navigation threshold. Their default peek lasts two second
 
 Deletion respects selected text and preserves text after the cursor. The overridden Ctrl shortcuts take priority only inside the command input; Ctrl+W closes tabs normally outside it.
 
-### Typing safeguards
+### Shortcut priority
 
-The `:` shortcut leaves text inputs, textareas, selects, rich editors, ARIA input widgets, editable documents, and closed/open shadow inputs alone. Frame inputs are protected as well. Browser fields such as the URL field do not open the line.
+The command line receives `:` before tab content, including web editors, site shortcuts, frame inputs, and the Settings search field. Browser fields such as the address bar have their own shortcuts.
 
-It does not activate for synthetic, repeating, composing, Ctrl/Alt/Meta-modified, or page-consumed keys, or while a page owns fullscreen, pointer lock, or a modal dialog. Vimium's consumed link-hint keys keep priority; a consumed `i` conservatively enables pass-through until Escape in that frame. Custom canvas editors that expose no editing semantics may need future site exclusions. See [known limitations](docs/architecture.md#limitations).
+The plain `:` shortcut ignores Ctrl, Alt, and Meta combinations. Both shortcuts stay inactive for synthetic events, IME composition, fullscreen, pointer lock, and modal dialogs. Held keys open the menu once.
 
 ### Native palette
 
