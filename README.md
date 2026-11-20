@@ -7,7 +7,7 @@ This repository contains the customization source, a portable installer, documen
 ## What it does
 
 - Hides the address bar and horizontal or native vertical tabs in custom Focus Mode.
-- Temporarily reveals the bars on navigation, reload, and tab activity; they hide after two seconds of inactivity. Address-field focus and interaction with visible tabs hold them open.
+- Peeks the address bar once when a foreground document load or reload starts. Fragments and History API URL updates stay quiet; HTTP redirects and load completion do not restart its timer. Tab activity remains a separate reveal trigger. Address-field focus and interaction with visible tabs hold their bars open.
 - Pins the address bar and tabs independently. Pinned bars reserve space; temporary reveals overlay the page.
 - Treats the address bar and its separator as one unit, leaving no stationary one-pixel line when hidden.
 - Opens a browser-owned command line with `:` from browsing context, including regular pages, internal tabs, extension pages, local files, source view, and PDFs.
@@ -75,6 +75,22 @@ The installer adds two AutoConfig files to the runtime and an activation marker 
 | `tabs peek` | Unpin and reveal tabs temporarily |
 
 A bar command issued from the normal browser enters custom Focus Mode while preserving the other bar's visible state. For example, `tabs hide` hides tabs and leaves the address bar pinned. `peek` explicitly unpins that bar so it can hide again after its timer.
+
+## When the address bar peeks
+
+| Event | Address-bar behavior |
+|---|---|
+| New foreground document or reload | One peek at load start |
+| HTTP redirects within that load | Same peek; timer is not restarted |
+| Load completes | No additional peek |
+| Fragment (`#section`) change | No peek |
+| `pushState` / `replaceState`, including path/query changes | No peek |
+| Back/Forward within the same document | No peek |
+| Back/Forward to another document | A new document-navigation peek |
+| Background-tab or subframe document loads | No peek over the current page |
+| Ctrl+L / focusing the address field | Reveal and hold while focused, then the normal grace period |
+
+The default peek lasts two seconds from load start, even if loading or redirects take longer. A later independent document navigation gets its own peek. Tab opening/closing/switching and the explicit `address` commands keep their existing behavior; these are separate triggers from navigation.
 
 ## Command-line behavior
 

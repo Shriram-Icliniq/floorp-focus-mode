@@ -73,10 +73,10 @@ check('closing a tab reveals address bar',js("return document.documentElement.ha
 # Real navigation and reload against a local HTTP server.
 js("FocusMode.state.lastActivity=null;gBrowser.selectedBrowser.loadURI(Services.io.newURI('"+url+"'),{triggeringPrincipal:Services.scriptSecurityManager.getSystemPrincipal()});")
 wait(.6)
-check('navigation/page load reveals address bar',js("return ['navigation','page load/reload'].includes(FocusMode.state.lastActivity) && document.documentElement.hasAttribute('focus-address-visible');"))
+check('navigation/page load reveals address bar',js("return FocusMode.state.lastActivity==='document navigation' && document.documentElement.hasAttribute('focus-address-visible');"))
 js("FocusMode.state.lastActivity=null;gBrowser.selectedBrowser.reload();")
 wait(.5)
-check('actual reload reveals address bar',js("return FocusMode.state.lastActivity==='page load/reload' && document.documentElement.hasAttribute('focus-address-visible');"))
+check('actual reload reveals address bar',js("return FocusMode.state.lastActivity==='document navigation' && document.documentElement.hasAttribute('focus-address-visible');"))
 check('actual reload also reveals temporary tabs',js("return FocusMode.state.lastTabActivity==='page load/reload' && document.documentElement.hasAttribute('focus-tabs-overlay');"))
 js("Services.prefs.setBoolPref('sidebar.verticalTabs',true);")
 wait(2.4)

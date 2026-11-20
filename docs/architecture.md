@@ -35,6 +35,12 @@ The custom mode's `focus-*` attributes belong to this package and are distinct f
 
 Temporary horizontal tabs and the navbar stack as overlays. Temporary vertical tabs overlay the page at its existing width. Permanent bar choices use native space reservation. The address separator is a `#nav-bar::after` pseudo-element inside the same transformed/transparent box; the stationary toolbox border and ordinary-tab content outline/shadow are removed only in custom mode. Split-view focus outlines retain native styling.
 
+## Document navigation peeks
+
+A per-window tabs-progress listener receives the originating browser explicitly. A weak set tracks active top-level network loads per browser. The first network START peeks the address bar only if that browser is selected; network STOP clears the load marker without revealing it. Intermediate location callbacks never reveal the address bar. This keeps same-document fragments and History API updates quiet, and gives a server redirect chain one original timer rather than a fresh peek for every address or completion event.
+
+Background loads update their bookkeeping without revealing over the selected tab. Subframes are ignored. A later separate document load gets another peek, including reload and different-document Back/Forward. Tab activity remains a separate trigger, and temporary tab overlays retain their existing location/load behavior. Explicit address focus still holds the bar and starts a grace period on blur.
+
 ## Ranking and recency
 
 The fixed catalogue contains eleven known commands. Fuzzy matching uses ordered characters and favors word starts and contiguous matches. Exact names outrank prefixes; aligned query words receive a bonus. Relevance ranks before recency; recency breaks ties; the catalogue order resolves remaining ties.
