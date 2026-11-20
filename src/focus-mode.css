@@ -1,0 +1,152 @@
+/* These selectors belong exclusively to Custom Focus Mode, never native Zen Mode. */
+@-moz-document url("chrome://browser/content/browser.xhtml") {
+  #focus-command-line, #focus-command-toast {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 2147483647 !important;
+    color: #edf0f5;
+    background: #191d25;
+    font: 14px/1.5 ui-monospace, monospace;
+    color-scheme: dark;
+    box-shadow: 0 -4px 20px #0004;
+    text-align: left;
+  }
+  #focus-command-line[hidden], #focus-command-toast[hidden] { display: none !important; }
+  #focus-command-line { border-top: 1px solid #4b5568; }
+  #focus-command-suggestions { max-height: min(340px, 45vh); overflow-y: auto; }
+  .focus-command-option { display: flex; gap: 24px; padding: 5px 16px; cursor: pointer; }
+  .focus-command-option strong { min-width: 140px; font-weight: 500; color: #b8d8ff; }
+  .focus-command-option span { color: #adb5c5; }
+  .focus-command-option[aria-selected="true"] { background: #303e54; }
+  .focus-command-row { display: flex; align-items: center; gap: 10px; padding: 8px 16px; border-top: 1px solid #343b49; }
+  .focus-command-row > span:first-child { color: #a9ceff; font-size: 18px; }
+  #focus-command-input { flex: 1; min-width: 80px; padding: 0; margin: 0; border: none; outline: none; box-shadow: none; background: transparent; color: inherit; font: inherit; }
+  .focus-command-hint { color: #9ba8bb; font-size: 12px; }
+  #focus-command-status { padding: 3px 16px 6px; color: #9ba8bb; font-size: 12px; }
+  #focus-command-status[data-error] { color: #ffb6aa; }
+  #focus-command-toast { padding: 8px 16px; }
+  @media (max-width: 650px) { .focus-command-hint { display: none; } }
+}
+@-moz-document url("chrome://browser/content/browser.xhtml") {
+  :root[focus-mode]:not([customizing]) #navigator-toolbox {
+    position: relative !important;
+    z-index: 100 !important;
+    overflow: visible !important;
+    /* The separator belongs to #nav-bar, not its stationary container. */
+    border-bottom: 0 !important;
+  }
+  /* Native content framing otherwise leaves a second hairline/shadow when
+     the toolbar is hidden. Preserve the separate split-view focus outlines. */
+  :root[focus-mode]:not([customizing]) #tabbrowser-tabpanels > :not(.split-view-panel) .browserContainer {
+    border-top: 0 !important;
+    outline: none !important;
+    box-shadow: none !important;
+  }
+  /* Inside the toolbar's box: opacity, animation and pinning apply to both
+     together, without an extra row or changes to the page's geometry. */
+  :root[focus-mode]:not([customizing]) #nav-bar::after {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    bottom: 0;
+    height: 1px;
+    background: var(--chrome-content-separator-color, GrayText);
+    pointer-events: none;
+  }
+  :root[focus-mode]:not([customizing]) :is(#toolbar-menubar, #PersonalToolbar,
+    #panel-sidebar-box, #panel-sidebar-select-box, #panel-sidebar-splitter,
+    #panel-sidebar-splitter2, #nora-statusbar) { display: none !important; }
+  :root[focus-mode]:not([focus-tabs-visible]):not([customizing]) #TabsToolbar {
+    display: none !important;
+  }
+  :root[focus-mode][focus-vertical]:not([focus-tabs-visible]):not([customizing])
+    :is(sidebar-main, #sidebar-main, #vertical-tabs,
+        #sidebar-box[sidebarcommand="viewTabsSidebar"], #sidebar-splitter) {
+    display: none !important;
+  }
+  :root[focus-mode][focus-vertical]:not([focus-tabs-pinned]):not([customizing]) #sidebar-launcher-splitter {
+    display: none !important;
+  }
+  :root[focus-mode][focus-tabs-overlay]:not([focus-vertical]):not([customizing]) #TabsToolbar {
+    position: absolute !important;
+    top: 100% !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 103 !important;
+    background-color: var(--toolbar-bgcolor, Canvas) !important;
+  }
+  :root[focus-mode][focus-tabs-overlay][focus-vertical]:not([customizing])
+    #sidebar-container {
+    position: fixed !important;
+    top: var(--focus-vertical-overlay-top, 0px) !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: auto !important;
+    width: var(--focus-vertical-overlay-width, 250px) !important;
+    max-width: 80vw !important;
+    pointer-events: auto !important;
+    visibility: visible !important;
+    z-index: 103 !important;
+    background-color: var(--toolbar-bgcolor, Canvas) !important;
+  }
+  :root[focus-mode][focus-tabs-overlay][focus-vertical]:not([customizing]) #sidebar-container {
+    overflow: visible !important;
+    contain: none !important;
+  }
+  :root[focus-mode][focus-tabs-overlay][focus-vertical]:not([customizing])
+    :is(sidebar-main, #sidebar-main) {
+    position: relative !important;
+    width: 100% !important;
+    height: 100% !important;
+    pointer-events: auto !important;
+    visibility: visible !important;
+    background-color: var(--toolbar-bgcolor, Canvas) !important;
+  }
+  :root[focus-mode][focus-tabs-overlay][focus-vertical][focus-tabs-on-right]:not([customizing])
+    #sidebar-container {
+    left: auto !important;
+    right: 0 !important;
+  }
+  :root[focus-mode]:not([customizing]) #nav-bar {
+    position: absolute !important;
+    top: calc(100% + var(--focus-tab-overlay-height, 0px)) !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: auto !important;
+    transform: translateY(-100%) !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    background-color: var(--toolbar-bgcolor, Canvas) !important;
+    z-index: 102 !important;
+    transition: opacity 120ms ease, transform 120ms ease !important;
+  }
+  /* Firefox paints the URL field in the top layer, outside #nav-bar's transform. */
+  :root[focus-mode]:not([customizing]) #urlbar {
+    opacity: 0 !important;
+    pointer-events: none !important;
+    transition: opacity 120ms ease !important;
+  }
+  :root[focus-mode][focus-address-visible]:not([customizing]) #nav-bar {
+    transform: none !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+  }
+  :root[focus-mode][focus-address-visible]:not([customizing]) #urlbar {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+  }
+  /* A pinned toolbar participates in layout, pushing the page below it.
+     Transient reveals retain the overlay behavior defined above. */
+  :root[focus-mode][focus-address-pinned]:not([customizing]) #nav-bar {
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    right: auto !important;
+    transform: none !important;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    :root[focus-mode] :is(#nav-bar, #urlbar) { transition: none !important; }
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "name": "Custom Focus Mode",
+  "testedAppBuildId": "20261112140843",
+  "testedPackageBuildId": "20261113033321",
+  "revealMs": 2000,
+  "paletteShortcut": "Ctrl+Shift+P"
+}
