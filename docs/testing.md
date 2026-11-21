@@ -46,6 +46,6 @@ JSON reports and PNG previews are generated in `tests/` and ignored by Git. Repo
 
 ## Validation record
 
-On 20 November 2026, the portable package passed **12 installer tests and 246 browser checks** on the tested Linux build, using a copied runtime and the optional Vimium C XPI: 102 command-line checks, 27 mode integration checks, 21 tab-overlay checks, 30 separator checks and 66 shared address/tab navigation checks (33 each in horizontal and vertical layouts). This record does not imply support for other builds or that CI runs the browser. Counts differ when optional Vimium checks are omitted.
+On 21 November 2026, the portable package passed **12 installer tests and 258 browser checks** on the tested Linux build, using a copied runtime and the optional Vimium C XPI: 114 command-line checks, 27 mode integration checks, 21 tab-overlay checks, 30 separator checks and 66 shared address/tab navigation checks (33 each in horizontal and vertical layouts). This record does not imply support for other builds or that CI runs the browser. Counts differ when optional Vimium checks are omitted.
 
 GitHub Actions runs the fast checks on pushes and pull requests. It does not download Floorp, fetch extensions, launch a signed-in browser, or publish generated reports.

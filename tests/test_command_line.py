@@ -11,7 +11,7 @@ if vimium_xpi:
  (profile/'extensions').mkdir()
  shutil.copy2(vimium_xpi,profile/'extensions/vimium-c@gdh1995.cn.xpi')
 page=profile/'fixture.html'
-page.write_text('''<!doctype html><title>Command line verification</title><h1>Command mode</h1><button id="button">Ordinary button</button><input id="text"><input id="password" type="password"><textarea id="area"></textarea><div id="editable" contenteditable="true">Editable</div><div id="role" role="textbox" tabindex="0">Rich editor</div><select id="select"><option>A</option></select><div id="shadow"></div><iframe srcdoc="<input id='nested'><button id='plain'>Frame button</button>"></iframe><script>const host=document.getElementById('shadow'); const root=host.attachShadow({mode:'closed'});root.innerHTML='<input id="deep">';host.onclick=()=>root.querySelector('input').focus();</script>''')
+page.write_text('''<!doctype html><title>Command line verification</title><h1>Command mode</h1><button id="button">Ordinary button</button><input id="text"><input id="password" type="password"><textarea id="area"></textarea><div id="editable" contenteditable="true">Editable</div><div id="role" role="textbox" tabindex="0">Rich editor</div><select id="select"><option>A</option></select><div id="chat-composer" class="ProseMirror" contenteditable="true" role="textbox" data-testid="chat-composer"><p><br></p></div><div id="shadow"></div><iframe srcdoc="<input id='nested'><button id='plain'>Frame button</button>"></iframe><script>const host=document.getElementById('shadow'); const root=host.attachShadow({mode:'closed'});root.innerHTML='<input id="deep">';host.onclick=()=>root.querySelector('input').focus();</script>''')
 server=http.server.ThreadingHTTPServer(('127.0.0.1',0),functools.partial(http.server.SimpleHTTPRequestHandler,directory=str(profile)))
 threading.Thread(target=server.serve_forever,daemon=True).start()
 url='http://127.0.0.1:'+str(server.server_port)+'/fixture.html'
@@ -74,28 +74,28 @@ try:
   command('unknown');check('unknown command stays open',opened());context('chrome');keys('\ue00c')
   command('address peek');command('address hide');context('chrome');check('address hide immediately clears temporary reveal',js('return !FocusMode.state.temporary && !document.documentElement.hasAttribute("focus-address-visible");'))
   command('tabs peek');command('tabs hide');context('chrome');check('tabs hide immediately clears temporary reveal',js('return !FocusMode.state.tabsTemporary && !document.documentElement.hasAttribute("focus-tabs-visible");'))
-  for selector in ['#text','#password','#area','#editable','#role','#select']:
-   context('chrome');js('gBrowser.selectedBrowser.focus();');pagefocus(selector);keys(':')
-   check('colon opens in '+selector,opened())
-   keys('\ue00c')
-   if selector in ['#text','#password','#area','#editable']:
-    context('content');check('colon stays out of '+selector,js('const node=document.querySelector('+json.dumps(selector)+'); return !(node.value ?? node.textContent).includes(":");'))
+  for selector in ['#text','#password','#area','#editable','#role','#select','#chat-composer']:
+   context('chrome');js('gBrowser.selectedBrowser.focus();');pagefocus(selector);keys(';:')
+   check('punctuation does not open command line in '+selector,not opened())
+   if selector in ['#text','#password','#area','#editable','#chat-composer']:
+    context('content');check('semicolon and colon reach '+selector,js('const node=document.querySelector('+json.dumps(selector)+'); return (node.value ?? node.textContent).includes(";:");'))
   context('content');js('document.querySelector("#shadow").click();');keys(':')
-  check('colon opens in a closed shadow input',opened());keys('\ue00c')
+  check('closed shadow input retains colon',not opened())
   context('content');m.cmd('WebDriver:SwitchToFrame',{'id':0});js('document.getElementById("nested").focus();');keys(':')
-  check('colon opens in a frame input',opened());keys('\ue00c')
+  check('frame input retains colon',not opened())
   context('content');js('document.getElementById("plain").focus();');keys(':');check('frame ordinary button opens command line',opened())
   keys('\ue00c');context('content');m.cmd('WebDriver:SwitchToFrame',{'id':None})
-  js("""document.querySelector('#button').focus();
+  js("""document.querySelector('#text').value='';document.querySelector('#button').focus();
     window.addEventListener('keydown', event => {
-      if (event.key !== ':') return;
+      if (event.key !== ':' || document.activeElement?.isContentEditable || document.activeElement?.matches('input,textarea')) return;
       const input = document.querySelector('#text');
       input.focus();
       input.value += event.key;
       event.preventDefault();
     }, {capture: true});""")
   keys(':');check('colon opens before the page redirects it into an input',opened());keys('\ue00c')
-  context('content');check('page shortcut handler never received colon',js('return document.querySelector("#text").value === "";'))
+  context('content');check('page shortcut handler never received colon',js('return document.querySelector("#text").value==="";'))
+  context('content');js('document.querySelector("#chat-composer").focus();');keys(';:');check('focused rich composer retains punctuation with site auto-focus handler installed',not opened());context('content');check('rich composer receives punctuation after browsing shortcut',js('return document.querySelector("#chat-composer").textContent.includes(";:;:");'))
   context('chrome');js('gURLBar.focus();');keys(':');check('address-bar typing does not open command line',not opened())
   openline();context('chrome');js('document.getElementById("focus-command-input").value="tabs";document.getElementById("focus-command-input").dispatchEvent(new Event("input"));')
   keys('\ue015');context('chrome');chosen=js('return document.querySelector(\'.focus-command-option[aria-selected="true"] strong\').textContent;');keys('\ue004');context('chrome');check('Down selects and Tab completes',js('return document.getElementById("focus-command-input").value;')==chosen)
@@ -146,7 +146,7 @@ try:
  # The same shortcut must work across tab protocols and browser process types.
  context('content');m.cmd('WebDriver:Navigate',{'url':'about:preferences'});time.sleep(.5)
  js('document.querySelector("#searchInput").focus();');keys(':')
- check('colon opens from focused Settings search',opened());keys('\ue00c')
+ check('focused Settings search retains colon',not opened())
  context('content')
  m.cmd('WebDriver:PerformActions',{'actions':[{'type':'key','id':'command-keys','actions':[
   {'type':'keyDown','value':'\ue009'},{'type':'keyDown','value':'\ue008'},

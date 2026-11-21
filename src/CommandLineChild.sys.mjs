@@ -7,9 +7,27 @@ export class FocusCommandLineChild extends JSWindowActorChild {
       this.canOpen();
   }
 
-  canOpen() {
+  canOpen(path = [], allowEditing = false) {
     const doc = this.document;
-    return !doc.fullscreenElement && !doc.pointerLockElement &&
+    // Check focus before reserving the key. Capture priority prevents a page
+    // from auto-focusing its composer while browsing, but must not take keys
+    // from a composer the user is already typing in.
+    const nodes = [...path];
+    const visited = new Set();
+    let active = doc.activeElement;
+    while (active && !visited.has(active)) {
+      visited.add(active);
+      nodes.push(active);
+      active = active.openOrClosedShadowRoot?.activeElement || active.parentElement ||
+        active.getRootNode()?.host;
+    }
+    const editing = doc.designMode === 'on' || nodes.some(node => node.nodeType === 1 && (
+      node.isContentEditable || node.matches(
+        'input, textarea, select, object, embed, [role="textbox"], [role="searchbox"], ' +
+        '[role="combobox"], [role="spinbutton"], [role="slider"], [role="grid"], ' +
+        '.monaco-editor, .cm-editor, .CodeMirror, [data-slate-editor], [data-lexical-editor]'
+      )));
+    return (!editing || allowEditing) && !doc.fullscreenElement && !doc.pointerLockElement &&
       !doc.querySelector('dialog[open], [aria-modal="true"]');
   }
 
@@ -20,7 +38,7 @@ export class FocusCommandLineChild extends JSWindowActorChild {
       event.code === 'Period' && event.ctrlKey && event.shiftKey &&
       !event.altKey && !event.metaKey;
     if ((!colon && !internalShortcut) || event.isComposing || event.keyCode === 229 ||
-        !this.canOpen()) return;
+        !this.canOpen(event.composedPath(), internalShortcut)) return;
     // Reserve the key before page listeners can redirect it into an editor.
     event.preventDefault();
     event.stopImmediatePropagation();
