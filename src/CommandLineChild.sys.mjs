@@ -1,5 +1,18 @@
 /* Runs in each content frame; never reads or transmits page text. */
 export class FocusCommandLineChild extends JSWindowActorChild {
+  hasVisibleModal() {
+    const doc = this.document;
+    // Consent managers can leave aria-modal=true on a hidden, full-screen
+    // dialog. Its mere presence must not disable the browsing shortcut.
+    return [...doc.querySelectorAll('dialog:modal, [aria-modal="true"]')].some(modal => {
+      if (modal.closest('[hidden], [aria-hidden="true"]') ||
+          !modal.checkVisibility({checkOpacity:true, checkVisibilityCSS:true})) return false;
+      const rect = modal.getBoundingClientRect();
+      return rect.width > 0 && rect.height > 0 && rect.bottom > 0 && rect.right > 0 &&
+        rect.top < this.contentWindow.innerHeight && rect.left < this.contentWindow.innerWidth;
+    });
+  }
+
   receiveMessage(message) {
     if (message.name !== 'CanOpen') return false;
     // A nested browser/frame owns its own keyboard handling.
@@ -28,7 +41,7 @@ export class FocusCommandLineChild extends JSWindowActorChild {
         '.monaco-editor, .cm-editor, .CodeMirror, [data-slate-editor], [data-lexical-editor]'
       )));
     return (!editing || allowEditing) && !doc.fullscreenElement && !doc.pointerLockElement &&
-      !doc.querySelector('dialog[open], [aria-modal="true"]');
+      !this.hasVisibleModal();
   }
 
   handleEvent(event) {

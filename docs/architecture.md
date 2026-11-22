@@ -27,6 +27,8 @@ The command field and suggestions are in browser chrome; a webpage cannot inspec
 
 The child checks existing editing focus before reserving the trusted colon shortcut. Browsing shortcuts still run in capture phase before ordinary page handlers can auto-focus a composer. Already-focused inputs, rich editors, frames and open/closed shadow editors keep their punctuation; the browser-key fallback uses the same eligibility check. The explicit Ctrl+Shift+Period internal-page shortcut may open from an editor. Internal tabs that retain keyboard focus on the browser element use a browser-key fallback: it asks the content actor for a boolean eligibility result and rechecks the selected tab, window global, and focus before opening. Nested frame/browser focus is left to the frame's own keyboard handling.
 
+Modal eligibility checks visibility rather than just DOM presence. Native `dialog:modal` and ARIA modal candidates block entry only while rendered visibly in the viewport; hidden/inaccessible ancestors, zero opacity, zero-sized boxes and offscreen placeholders are ignored. Modeless native dialogs do not globally block browsing shortcuts. This prevents permanently mounted but hidden consent managers, such as the one observed on Scientific American, from disabling the menu.
+
 Command input shortcuts are intercepted in capture phase only while that input is focused. Deletion selects the relevant text and invokes the focused editor's native delete operation so Ctrl+Z works. No shell execution or local-app launcher is included.
 
 ## Appearance and geometry

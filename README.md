@@ -118,7 +118,7 @@ Deletion respects selected text and preserves text after the cursor. The overrid
 
 While browsing, the command line receives `:` before a site can auto-focus an editor. If a text field, rich editor, frame input, or Settings search is already focused, `:` and `;` pass through normally. Open/closed shadow editors and ARIA input widgets are protected too. Browser fields such as the address bar retain their own typing behavior. The explicit Ctrl+Shift+Period shortcut on internal pages remains available even from a focused search field.
 
-The plain `:` shortcut ignores Ctrl, Alt, and Meta combinations. Both shortcuts stay inactive for synthetic events, IME composition, fullscreen, pointer lock, and modal dialogs. Held keys open the menu once.
+The plain `:` shortcut ignores Ctrl, Alt, and Meta combinations. Both shortcuts stay inactive for synthetic events, IME composition, fullscreen, pointer lock, and visible active modal dialogs. Hidden consent dialogs, transparent/offscreen modal placeholders, and modeless panels do not disable browsing shortcuts. Held keys open the menu once.
 
 ### Native palette
 

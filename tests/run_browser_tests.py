@@ -13,6 +13,7 @@ ROOT = Path(__file__).resolve().parent
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--runtime', type=Path, required=True)
 parser.add_argument('--vimium-xpi', type=Path, help='Optional locally downloaded Vimium C XPI for coexistence checks')
+parser.add_argument('--commands-only', action='store_true', help='Run only command-line and typing-guard checks')
 parser.add_argument('--navigation-only', action='store_true', help='Run only document-navigation peek checks')
 args = parser.parse_args()
 runtime = args.runtime.expanduser().resolve()
@@ -30,11 +31,15 @@ with tempfile.TemporaryDirectory(prefix='floorp-public-tests-') as temporary:
         env['FLOORP_VIMIUM_XPI'] = str(args.vimium_xpi.expanduser().resolve())
     else:
         env.pop('FLOORP_VIMIUM_XPI', None)
-    suites = ['test_navigation_peek.py'] if args.navigation_only else ['test_command_line.py', 'test_address_separator.py', 'test_navigation_peek.py']
+    suites = ['test_command_line.py'] if args.commands_only else ['test_navigation_peek.py'] if args.navigation_only else ['test_command_line.py', 'test_address_separator.py', 'test_navigation_peek.py']
     for suite in suites:
-        subprocess.run([sys.executable, str(ROOT / suite)], env=env, check=True)
-    subprocess.run([sys.executable, str(ROOT / 'test_navigation_peek.py')], env={**env, 'FLOORP_TEST_VERTICAL':'1'}, check=True)
+        subprocess.run([sys.executable, str(ROOT / suite)] + (['--commands-only'] if args.commands_only else []), env=env, check=True)
+    if not args.commands_only:
+        subprocess.run([sys.executable, str(ROOT / 'test_navigation_peek.py')], env={**env, 'FLOORP_TEST_VERTICAL':'1'}, check=True)
     names = ['navigation-peek-results.json'] if args.navigation_only else ['command-line-results.json', 'test-results.json', 'tabs-overlay-results.json', 'address-separator-results.json', 'navigation-peek-results.json']
-    names.append('navigation-peek-vertical-results.json')
+    if args.commands_only:
+        names = ['command-line-results.json']
+    else:
+        names.append('navigation-peek-vertical-results.json')
     results = {name: json.loads((ROOT / name).read_text())['passed'] for name in names}
     print(json.dumps({'passed': sum(results.values()), 'suites': results}, indent=2))

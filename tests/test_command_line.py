@@ -85,6 +85,28 @@ try:
   check('frame input retains colon',not opened())
   context('content');js('document.getElementById("plain").focus();');keys(':');check('frame ordinary button opens command line',opened())
   keys('\ue00c');context('content');m.cmd('WebDriver:SwitchToFrame',{'id':None})
+  # Cookie managers may retain aria-modal on hidden full-screen dialogs.
+  modal_cases=[
+   ('hidden consent dialog', '<div id="modal-test" role="dialog" aria-modal="true" style="position:fixed;inset:0;visibility:hidden;opacity:0"></div>', True),
+   ('display-none modal', '<div id="modal-test" aria-modal="true" style="display:none"></div>', True),
+   ('modal inside hidden ancestor', '<div id="modal-test" hidden><div aria-modal="true" style="position:fixed;inset:0"></div></div>', True),
+   ('transparent modal ancestor', '<div id="modal-test" style="opacity:0"><div aria-modal="true" style="position:fixed;inset:0"></div></div>', True),
+   ('offscreen modal', '<div id="modal-test" aria-modal="true" style="position:fixed;left:-200vw;top:0;width:100vw;height:100vh"></div>', True),
+   ('zero-sized modal placeholder', '<div id="modal-test" aria-modal="true" style="width:0;height:0"></div>', True),
+   ('visible ARIA modal', '<div id="modal-test" role="dialog" aria-modal="true" style="position:fixed;inset:0;background:white"></div>', False),
+  ]
+  for label,markup,allowed in modal_cases:
+   context('content');js('document.body.insertAdjacentHTML("beforeend",'+json.dumps(markup)+');document.querySelector("#button").focus();');keys(':')
+   check(label+(' allows browsing shortcut' if allowed else ' retains keyboard ownership'),opened()==allowed)
+   if allowed:keys('\ue00c')
+   context('content');js('document.getElementById("modal-test").remove();')
+  context('content');js('const modal=document.createElement("dialog");modal.id="modal-test";modal.innerHTML="<button>Dialog action</button>";document.body.appendChild(modal);modal.showModal();');keys(':')
+  check('visible native modal retains keyboard ownership',not opened())
+  context('content');js('document.getElementById("modal-test").close();document.getElementById("modal-test").remove();document.querySelector("#button").focus();');keys(':')
+  check('closing native modal restores browsing shortcut',opened());keys('\ue00c')
+  context('content');js('const modal=document.createElement("dialog");modal.id="modal-test";modal.textContent="Modeless panel";document.body.appendChild(modal);modal.show();document.querySelector("#button").focus();');keys(':')
+  check('modeless native dialog does not disable browsing shortcut',opened());keys('\ue00c')
+  context('content');js('document.getElementById("modal-test").close();document.getElementById("modal-test").remove();')
   js("""document.querySelector('#text').value='';document.querySelector('#button').focus();
     window.addEventListener('keydown', event => {
       if (event.key !== ':' || document.activeElement?.isContentEditable || document.activeElement?.matches('input,textarea')) return;

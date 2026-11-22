@@ -28,7 +28,7 @@ python3 tests/run_browser_tests.py \
 
 The runner checks the provided runtime, copies it into a temporary directory, and adds a disposable-test sentinel. The fixture installer requires that sentinel before writing to the copied runtime. Fresh profiles are created for the command and separator suites. Installed assets stay outside those protected profiles, under the copied runtime itself. No real profile is launched or modified. Allow disk space for a complete runtime copy and local socket access for automation/HTTP fixtures. Native browser startup or an optional extension can make background network requests; the fixtures and assertions use local pages and internal browser pages, not signed-in sites.
 
-For focused navigation checks in both horizontal and vertical layouts, add `--navigation-only` to the browser runner.
+For focused command-line and editor/modal-guard checks, add `--commands-only`. For focused navigation checks in both horizontal and vertical layouts, add `--navigation-only` to the browser runner.
 
 The runner enables `MOZ_REMOTE_ALLOW_SYSTEM_ACCESS=1` only in its test subprocess environment, because Marionette needs browser-chrome access. Ports `2892`, `2893` and `2894` must be free; direct mode suites share the active test session. Automation is not enabled in real profiles by this package.
 
@@ -47,5 +47,7 @@ JSON reports and PNG previews are generated in `tests/` and ignored by Git. Repo
 ## Validation record
 
 On 21 November 2026, the portable package passed **12 installer tests and 258 browser checks** on the tested Linux build, using a copied runtime and the optional Vimium C XPI: 114 command-line checks, 27 mode integration checks, 21 tab-overlay checks, 30 separator checks and 66 shared address/tab navigation checks (33 each in horizontal and vertical layouts). This record does not imply support for other builds or that CI runs the browser. Counts differ when optional Vimium checks are omitted.
+
+On 22 November 2026, the modal-visibility fix passed **124 command-line checks and 12 installer tests**, and the command menu was verified on Scientific American's public homepage in a fresh isolated browser. The fixtures cover hidden full-screen consent dialogs, display-none/hidden/transparent ancestors, offscreen/zero-sized placeholders, visible ARIA/native modals, and native modeless dialogs. Editor punctuation and browsing capture priority remain covered. The navigation/layout suites were not rerun for this focused input-guard change.
 
 GitHub Actions runs the fast checks on pushes and pull requests. It does not download Floorp, fetch extensions, launch a signed-in browser, or publish generated reports.
