@@ -94,7 +94,7 @@ Both bars use the same navigation threshold. Their default peek lasts two second
 
 ## Command-line behavior
 
-- `:` opens the command line from tab content, including when a text field has focus. It overlays the bottom of the page without shifting it.
+- **Ctrl+;** opens the command line from tab content, including when a text field or rich editor has focus. It overlays the bottom of the page without shifting it.
 - On `about:` pages, **Ctrl+Shift+Period** also opens the command line as an alternate shortcut.
 - **Enter executes the highlighted suggestion**, including with an empty or incomplete query. If nothing matches, the line stays open for correction.
 - Empty input lists the most recently executed commands first. Only known command names are saved, separately per profile; raw search queries and page data are not stored.
@@ -116,9 +116,11 @@ Deletion respects selected text and preserves text after the cursor. The overrid
 
 ### Shortcut priority
 
-While browsing, the command line receives `:` before a site can auto-focus an editor. If a text field, rich editor, frame input, or Settings search is already focused, `:` and `;` pass through normally. Open/closed shadow editors and ARIA input widgets are protected too. Browser fields such as the address bar retain their own typing behavior. The explicit Ctrl+Shift+Period shortcut on internal pages remains available even from a focused search field.
+The command line reserves **Ctrl+;** in capture phase before ordinary page shortcut handlers, including in focused inputs, rich editors, frames and open/closed shadow editors. This deliberately claims that key combination from websites. Plain `:` and `;` always remain available to the page. Browser fields such as the address bar retain their own keyboard behavior. The alternate Ctrl+Shift+Period shortcut on internal pages remains available.
 
-The plain `:` shortcut ignores Ctrl, Alt, and Meta combinations. Both shortcuts stay inactive for synthetic events, IME composition, fullscreen, pointer lock, and visible active modal dialogs. Hidden consent dialogs, transparent/offscreen modal placeholders, and modeless panels do not disable browsing shortcuts. Held keys open the menu once.
+The binding uses the semicolon character with Ctrl only; Shift, Alt and Meta combinations are excluded. Both entry shortcuts stay inactive for synthetic events, IME composition, fullscreen, pointer lock, and visible active modal dialogs. Hidden consent dialogs, transparent/offscreen modal placeholders, and modeless panels do not disable the shortcut. Held keys open the menu once.
+
+Editor focus is deliberately allowed: a hidden caret does not reliably mean a document editor has released keyboard focus. This addresses the focus restriction encountered with Google Docs; automated tests cover focused iframe/design-mode editors with invisible carets, rather than a signed-in live Google Docs document.
 
 ### Native palette
 

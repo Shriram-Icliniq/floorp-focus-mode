@@ -18,14 +18,14 @@ The early `palette.mjs` adapter registers five existing Focus Mode actions with 
 | `focus-mode.js` | Per-window appearance state, reveal timers, browser/tab activity, native Zen coordination |
 | `focus-mode.css` | Browser chrome, overlay geometry, separator, command UI presentation |
 | `command-line.js` | Fixed command catalogue, fuzzy ranking, recency, selected-row execution, native input editing |
-| `CommandLineChild.sys.mjs` | Trusted colon handling in content frames |
+| `CommandLineChild.sys.mjs` | Trusted Ctrl+; handling in content frames |
 | `CommandLineParent.sys.mjs` | Route requests from the focused selected tab to its browser-owned command UI |
 
 ## Input boundary
 
 The command field and suggestions are in browser chrome; a webpage cannot inspect the input or execute commands through the public page DOM. The actor's `Open` message asks only to open the command line, not to dispatch arbitrary actions. The parent checks the selected tab and browser focus and can follow embedded internal browsers back to the actual tab.
 
-The child checks existing editing focus before reserving the trusted colon shortcut. Browsing shortcuts still run in capture phase before ordinary page handlers can auto-focus a composer. Already-focused inputs, rich editors, frames and open/closed shadow editors keep their punctuation; the browser-key fallback uses the same eligibility check. The explicit Ctrl+Shift+Period internal-page shortcut may open from an editor. Internal tabs that retain keyboard focus on the browser element use a browser-key fallback: it asks the content actor for a boolean eligibility result and rechecks the selected tab, window global, and focus before opening. Nested frame/browser focus is left to the frame's own keyboard handling.
+The child reserves trusted Ctrl+; in capture phase before ordinary page handlers, regardless of editor focus. Plain punctuation is never intercepted. This avoids relying on a caret's visibility or editor implementation, including iframe/design-mode and open/closed shadow editors. The explicit Ctrl+Shift+Period internal-page shortcut remains available. Internal tabs that retain keyboard focus on the browser element use a browser-key fallback: it asks the content actor for a boolean eligibility result and rechecks the selected tab, window global, and focus before opening. Nested frame/browser focus is left to the frame's own keyboard handling. Browser chrome fields do not trigger the content shortcut.
 
 Modal eligibility checks visibility rather than just DOM presence. Native `dialog:modal` and ARIA modal candidates block entry only while rendered visibly in the viewport; hidden/inaccessible ancestors, zero opacity, zero-sized boxes and offscreen placeholders are ignored. Modeless native dialogs do not globally block browsing shortcuts. This prevents permanently mounted but hidden consent managers, such as the one observed on Scientific American, from disabling the menu.
 
@@ -64,7 +64,7 @@ Do not simply remove build guards to make an untested release load. Other OS bui
 ## Limitations
 
 - Tested on one Linux build; this is not a stable cross-version browser API.
-- The `:` entry key and native Ctrl+Shift+P adapter are currently fixed in source. `config.json` records the native shortcut; it is not a general key-remapping system.
-- Fullscreen, pointer lock, composing, modal-dialog and other input guards intentionally take priority over colon entry.
+- The Ctrl+; entry shortcut and native Ctrl+Shift+P adapter are currently fixed in source. `config.json` records the native shortcut; it is not a general key-remapping system.
+- Fullscreen, pointer lock, composing, modal-dialog and other input guards intentionally take priority over command entry.
 - No Vim command chaining, external programs, shell commands, arbitrary JavaScript commands, command-line Normal mode, or full command history is implemented.
 - Native undo covers input editing. Programmatic suggestion completion is not a full Vim undo/history implementation.

@@ -50,4 +50,6 @@ On 21 November 2026, the portable package passed **12 installer tests and 258 br
 
 On 22 November 2026, the modal-visibility fix passed **124 command-line checks and 12 installer tests**, and the command menu was verified on Scientific American's public homepage in a fresh isolated browser. The fixtures cover hidden full-screen consent dialogs, display-none/hidden/transparent ancestors, offscreen/zero-sized placeholders, visible ARIA/native modals, and native modeless dialogs. Editor punctuation and browsing capture priority remain covered. The navigation/layout suites were not rerun for this focused input-guard change.
 
+On 23 November 2026, switching command entry to **Ctrl+;** passed **135 command-line checks and 12 installer tests** with the optional Vimium C XPI. The suite verifies entry from focused fields, rich editors, closed shadow inputs, iframe inputs and a design-mode iframe with an invisible caret, plus modal guards, plain punctuation, native editing, Vimium coexistence and tab protocols. A signed-in live Google Docs document was not tested. Navigation/layout suites were not rerun for this keyboard-only change.
+
 GitHub Actions runs the fast checks on pushes and pull requests. It does not download Floorp, fetch extensions, launch a signed-in browser, or publish generated reports.

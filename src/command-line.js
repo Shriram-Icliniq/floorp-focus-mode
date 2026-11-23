@@ -207,9 +207,10 @@
   // element. Check the content actor before opening from that browser event.
   const onBrowserKey = async event => {
     const target = gBrowser.selectedBrowser;
-    if (event.key !== ':' || !event.isTrusted || event.defaultPrevented ||
+    if (event.key !== ';' || !event.ctrlKey || event.shiftKey ||
+        !event.isTrusted || event.defaultPrevented ||
         event.isComposing || event.keyCode === 229 || event.repeat ||
-        event.ctrlKey || event.altKey || event.metaKey || event.target !== target ||
+        event.altKey || event.metaKey || event.target !== target ||
         !host.hidden || document.activeElement !== target) return;
     const global = target.browsingContext.currentWindowGlobal;
     try {

@@ -35,14 +35,16 @@ try:
  def keys(text):
   m.cmd('WebDriver:PerformActions',{'actions':[{'type':'key','id':'command-keys','actions':[a for c in text for a in [{'type':'keyDown','value':c},{'type':'keyUp','value':c}]]}]})
   time.sleep(.12)
+ def chord(letter):
+  m.cmd('WebDriver:PerformActions',{'actions':[{'type':'key','id':'command-keys','actions':[{'type':'keyDown','value':'\ue009'},{'type':'keyDown','value':letter},{'type':'keyUp','value':letter},{'type':'keyUp','value':'\ue009'}]}]});time.sleep(.12)
  def opened():
   context('chrome');return js("return !!window.FocusCommandLine && !document.getElementById('focus-command-line').hidden;")
  def pagefocus(selector='body'):
   context('content');js("document.querySelector("+json.dumps(selector)+").focus();")
  def openline():
   context('chrome');js('gBrowser.selectedBrowser.focus();')
-  context('content');js('document.activeElement.blur();');keys(':')
-  check('colon opens from browsing context',opened())
+  context('content');js('document.activeElement.blur();');chord(';')
+  check('Ctrl+; opens from browsing context',opened())
  def command(text):
   context('chrome');js('FocusCommandLine.open(); const i=document.getElementById("focus-command-input");i.value='+json.dumps(text)+';i.dispatchEvent(new Event("input"));');keys('\ue007')
  if '--tabs-only' not in sys.argv:
@@ -50,6 +52,7 @@ try:
   context('chrome');check('custom command UI loaded',js('return !!FocusCommandLine && FocusMode.state.ready;'))
   # Wait for fixture navigation and extension startup.
   context('content');m.cmd('WebDriver:Navigate',{'url':url});time.sleep(1)
+  context('content');keys(';:');check('plain punctuation no longer opens while browsing',not opened())
   openline()
   context('chrome');check('all eleven commands offered',js("return document.querySelectorAll('.focus-command-option').length===11;"))
   check('command UI overlays without resizing content',js("return getComputedStyle(document.getElementById('focus-command-line')).position==='fixed';"))
@@ -79,11 +82,16 @@ try:
    check('punctuation does not open command line in '+selector,not opened())
    if selector in ['#text','#password','#area','#editable','#chat-composer']:
     context('content');check('semicolon and colon reach '+selector,js('const node=document.querySelector('+json.dumps(selector)+'); return (node.value ?? node.textContent).includes(";:");'))
+   chord(';');check('Ctrl+; opens from focused '+selector,opened());keys('\ue00c')
   context('content');js('document.querySelector("#shadow").click();');keys(':')
   check('closed shadow input retains colon',not opened())
+  chord(';');check('Ctrl+; opens from closed shadow input',opened());keys('\ue00c')
   context('content');m.cmd('WebDriver:SwitchToFrame',{'id':0});js('document.getElementById("nested").focus();');keys(':')
   check('frame input retains colon',not opened())
-  context('content');js('document.getElementById("plain").focus();');keys(':');check('frame ordinary button opens command line',opened())
+  chord(';');check('Ctrl+; opens from focused iframe input',opened());keys('\ue00c')
+  context('content');js('document.designMode="on";document.body.style.caretColor="transparent";document.body.focus();');chord(';')
+  check('Ctrl+; opens from iframe editor with invisible caret',opened());keys('\ue00c');context('content');js('document.designMode="off";')
+  context('content');js('document.getElementById("plain").focus();');chord(';');check('frame ordinary button opens command line',opened())
   keys('\ue00c');context('content');m.cmd('WebDriver:SwitchToFrame',{'id':None})
   # Cookie managers may retain aria-modal on hidden full-screen dialogs.
   modal_cases=[
@@ -96,29 +104,29 @@ try:
    ('visible ARIA modal', '<div id="modal-test" role="dialog" aria-modal="true" style="position:fixed;inset:0;background:white"></div>', False),
   ]
   for label,markup,allowed in modal_cases:
-   context('content');js('document.body.insertAdjacentHTML("beforeend",'+json.dumps(markup)+');document.querySelector("#button").focus();');keys(':')
+   context('content');js('document.body.insertAdjacentHTML("beforeend",'+json.dumps(markup)+');document.querySelector("#button").focus();');chord(';')
    check(label+(' allows browsing shortcut' if allowed else ' retains keyboard ownership'),opened()==allowed)
    if allowed:keys('\ue00c')
    context('content');js('document.getElementById("modal-test").remove();')
-  context('content');js('const modal=document.createElement("dialog");modal.id="modal-test";modal.innerHTML="<button>Dialog action</button>";document.body.appendChild(modal);modal.showModal();');keys(':')
+  context('content');js('const modal=document.createElement("dialog");modal.id="modal-test";modal.innerHTML="<button>Dialog action</button>";document.body.appendChild(modal);modal.showModal();');chord(';')
   check('visible native modal retains keyboard ownership',not opened())
-  context('content');js('document.getElementById("modal-test").close();document.getElementById("modal-test").remove();document.querySelector("#button").focus();');keys(':')
+  context('content');js('document.getElementById("modal-test").close();document.getElementById("modal-test").remove();document.querySelector("#button").focus();');chord(';')
   check('closing native modal restores browsing shortcut',opened());keys('\ue00c')
-  context('content');js('const modal=document.createElement("dialog");modal.id="modal-test";modal.textContent="Modeless panel";document.body.appendChild(modal);modal.show();document.querySelector("#button").focus();');keys(':')
+  context('content');js('const modal=document.createElement("dialog");modal.id="modal-test";modal.textContent="Modeless panel";document.body.appendChild(modal);modal.show();document.querySelector("#button").focus();');chord(';')
   check('modeless native dialog does not disable browsing shortcut',opened());keys('\ue00c')
   context('content');js('document.getElementById("modal-test").close();document.getElementById("modal-test").remove();')
   js("""document.querySelector('#text').value='';document.querySelector('#button').focus();
     window.addEventListener('keydown', event => {
-      if (event.key !== ':' || document.activeElement?.isContentEditable || document.activeElement?.matches('input,textarea')) return;
+      if (event.key !== ';' || !event.ctrlKey) return;
       const input = document.querySelector('#text');
       input.focus();
       input.value += event.key;
       event.preventDefault();
     }, {capture: true});""")
-  keys(':');check('colon opens before the page redirects it into an input',opened());keys('\ue00c')
-  context('content');check('page shortcut handler never received colon',js('return document.querySelector("#text").value==="";'))
+  chord(';');check('Ctrl+; opens before the page redirects it into an input',opened());keys('\ue00c')
+  context('content');check('page shortcut handler never received Ctrl+;',js('return document.querySelector("#text").value==="";'))
   context('content');js('document.querySelector("#chat-composer").focus();');keys(';:');check('focused rich composer retains punctuation with site auto-focus handler installed',not opened());context('content');check('rich composer receives punctuation after browsing shortcut',js('return document.querySelector("#chat-composer").textContent.includes(";:;:");'))
-  context('chrome');js('gURLBar.focus();');keys(':');check('address-bar typing does not open command line',not opened())
+  context('chrome');js('gURLBar.focus();');chord(';');check('address-bar shortcut does not open command line',not opened())
   openline();context('chrome');js('document.getElementById("focus-command-input").value="tabs";document.getElementById("focus-command-input").dispatchEvent(new Event("input"));')
   keys('\ue015');context('chrome');chosen=js('return document.querySelector(\'.focus-command-option[aria-selected="true"] strong\').textContent;');keys('\ue004');context('chrome');check('Down selects and Tab completes',js('return document.getElementById("focus-command-input").value;')==chosen)
   r=m.cmd('WebDriver:TakeScreenshot',{'id':None,'highlights':[],'full':False});r=r.get('value',r)
@@ -129,8 +137,6 @@ try:
    context('chrome');js('FocusCommandLine.open(); const i=document.getElementById("focus-command-input");i.value='+json.dumps(text)+';i.dispatchEvent(new Event("input"));')
   def value():return js('return document.getElementById("focus-command-input").value;')
   def chosen():return js('return document.querySelector(\'.focus-command-option[aria-selected="true"] strong\')?.textContent;')
-  def chord(letter):
-   m.cmd('WebDriver:PerformActions',{'actions':[{'type':'key','id':'command-keys','actions':[{'type':'keyDown','value':'\ue009'},{'type':'keyDown','value':letter},{'type':'keyUp','value':letter},{'type':'keyUp','value':'\ue009'}]}]});time.sleep(.12)
   for text,expected in [('adr sh','address show'),('tbpk','tabs peek'),('FOCUS OF','focus off')]:
    query(text);check('fuzzy query '+text+' ranks expected command first',chosen()==expected);keys('\ue00c')
   command('address hide');query('adr sh');check('fuzzy match quality outranks recency',chosen()=='address show');keys('\ue00c')
@@ -152,9 +158,9 @@ try:
   context('content');old=m.cmd('WebDriver:GetWindowHandle',{});old=old.get('value',old);new=m.cmd('WebDriver:NewWindow',{'type':'tab'});new=new.get('value',new);m.cmd('WebDriver:SwitchToWindow',{'handle':new['handle']});context('chrome');js('gBrowser.selectedBrowser.focus();');chord('w');time.sleep(.2);m.cmd('WebDriver:SwitchToWindow',{'handle':old});context('chrome');check('Ctrl+W outside command mode closes its tab',js('return gBrowser.tabs.length;')==count)
   if vimium_xpi:
    context('chrome');check('Vimium installed in disposable profile',js('return Services.prefs.getStringPref("extensions.webextensions.uuids", "").includes("vimium-c@gdh1995.cn");'))
-   context('chrome');js('gBrowser.selectedBrowser.focus();');context('content');js('document.activeElement.blur();');keys('f');keys(':')
-   check('colon opens while Vimium hints are active',opened());keys('\ue00c');keys('\ue00c')
-   keys('i');keys(':');check('colon opens in Vimium insert mode',opened());keys('\ue00c');keys('\ue00c')
+   context('chrome');js('gBrowser.selectedBrowser.focus();');context('content');js('document.activeElement.blur();');keys('f');chord(';')
+   check('Ctrl+; opens while Vimium hints are active',opened());keys('\ue00c');keys('\ue00c')
+   keys('i');chord(';');check('Ctrl+; opens in Vimium insert mode',opened());keys('\ue00c');keys('\ue00c')
   openline();context('chrome');js('gURLBar.focus();');time.sleep(.1);check('moving focus to browser UI dismisses command line',not opened())
  # A small blank PDF exercises the built-in viewer's resource document.
  objects=[b'<< /Type /Catalog /Pages 2 0 R >>',b'<< /Type /Pages /Kids [3 0 R] /Count 1 >>',b'<< /Type /Page /Parent 2 0 R /MediaBox [0 0 400 400] /Resources << >> >>']
@@ -182,16 +188,16 @@ try:
  for destination in destinations:
   context('content');m.cmd('WebDriver:Navigate',{'url':destination});time.sleep(.5)
   context('chrome');js('gBrowser.selectedBrowser.focus();')
-  context('content');js('const body=document.body || document.documentElement;body.setAttribute("tabindex","-1");body.focus();');keys(':')
-  check('colon opens in '+destination,opened())
+  context('content');js('const body=document.body || document.documentElement;body.setAttribute("tabindex","-1");body.focus();');chord(';')
+  check('Ctrl+; opens in '+destination,opened())
   context('chrome');keys('\ue00c')
  # A fresh tab and an already-existing tab keep the shortcut after a switch.
  context('content');original=m.cmd('WebDriver:GetWindowHandle',{});original=original.get('value',original)
  created=m.cmd('WebDriver:NewWindow',{'type':'tab'});created=created.get('value',created)
  m.cmd('WebDriver:SwitchToWindow',{'handle':created['handle']});time.sleep(.4)
- context('chrome');js('gBrowser.selectedBrowser.focus();');context('content');js('document.body?.focus();');keys(':');check('newly opened tab supports command mode',opened())
+ context('chrome');js('gBrowser.selectedBrowser.focus();');context('content');js('document.body?.focus();');chord(';');check('newly opened tab supports command mode',opened())
  context('chrome');keys('\ue00c');context('content');m.cmd('WebDriver:CloseWindow',{});m.cmd('WebDriver:SwitchToWindow',{'handle':original});time.sleep(.2)
- context('chrome');js('gBrowser.selectedBrowser.focus();');context('content');js('document.body?.focus();');keys(':');check('existing tab still supports command mode after switching',opened())
+ context('chrome');js('gBrowser.selectedBrowser.focus();');context('content');js('document.body?.focus();');chord(';');check('existing tab still supports command mode after switching',opened())
  context('chrome');keys('\ue00c')
  context('content');m.cmd('WebDriver:Navigate',{'url':url});time.sleep(.3)
  # Existing Focus Mode regression suites run on this same disposable session.
