@@ -196,31 +196,41 @@
     target.addEventListener(event, handler, capture);
     cleanup.push(() => target.removeEventListener(event, handler, capture));
   }
+  // Store context per browser, including background/history navigations. Compare
+  // committed sites rather than URL strings or provisional redirect targets.
+  function siteContext(uri) {
+    if (!uri || !["http", "https"].includes(uri.scheme)) return null;
+    try { return Services.eTLD.getBaseDomain(uri); }
+    catch {
+      try { return uri.asciiHost; } catch { return null; }
+    }
+  }
+  const sites = new WeakMap();
+  for (const browser of gBrowser.browsers) sites.set(browser, siteContext(browser.currentURI));
   for (const event of ["TabOpen", "TabClose", "TabSelect", "TabMove", "TabPinned", "TabUnpinned",
-    "TabGrouped", "TabUngrouped", "TabGroupCreate", "TabGroupRemoved"])
-    listen(gBrowser.tabContainer, event, () => { reveal(event); revealTabs(event); });
+    "TabGrouped", "TabUngrouped", "TabGroupCreate", "TabGroupRemoved", "SSTabRestoring"])
+    listen(gBrowser.tabContainer, event, ev => {
+      if (event === "TabOpen") {
+        const browser = ev.target.linkedBrowser;
+        if (browser) sites.set(browser, siteContext(browser.currentURI));
+      }
+      revealTabs(event);
+    });
   for (const event of ["focusin", "focusout", "popupshown", "popuphidden"])
     listen(document, event, () => window.setTimeout(refreshFocus, 0), true);
-  const documentLoads = new WeakSet();
   const progress = {
-    onStateChange(browser, webProgress, request, flags) {
+    onLocationChange(browser, webProgress, request, location, flags = 0) {
+      if (!webProgress?.isTopLevel) return;
+      const previous = sites.get(browser);
+      const next = siteContext(location);
+      sites.set(browser, next);
       const W = Ci.nsIWebProgressListener;
-      if (webProgress?.isTopLevel && (flags & W.STATE_IS_NETWORK) &&
-          (flags & (W.STATE_START | W.STATE_STOP))) {
-        // A network START/STOP pair spans a document load, including its HTTP
-        // redirects. URL text changes and load completion never restart the
-        // bar timers. Track background loads without revealing their UI.
-        if (flags & W.STATE_START) {
-          if (!documentLoads.has(browser)) {
-            documentLoads.add(browser);
-            if (browser === gBrowser.selectedBrowser) {
-              reveal("document navigation");
-              revealTabs("document navigation");
-            }
-          }
-        }
-        if (flags & W.STATE_STOP) documentLoads.delete(browser);
-      }
+      const D = Ci.nsIDocShell;
+      if (browser !== gBrowser.selectedBrowser || !next || next === previous ||
+          (flags & (W.LOCATION_CHANGE_SAME_DOCUMENT | W.LOCATION_CHANGE_RELOAD |
+            W.LOCATION_CHANGE_SESSION_STORE | W.LOCATION_CHANGE_ERROR_PAGE)) ||
+          (webProgress.loadType & (D.LOAD_CMD_HISTORY | D.LOAD_CMD_RELOAD))) return;
+      reveal("site navigation");
     },
     QueryInterface: ChromeUtils.generateQI(["nsIWebProgressListener", "nsISupportsWeakReference"]),
   };

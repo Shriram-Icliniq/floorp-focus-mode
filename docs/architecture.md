@@ -37,11 +37,13 @@ The custom mode's `focus-*` attributes belong to this package and are distinct f
 
 Temporary horizontal tabs and the navbar stack as overlays. Temporary vertical tabs overlay the page at its existing width. Permanent bar choices use native space reservation. The address separator is a `#nav-bar::after` pseudo-element inside the same transformed/transparent box; the stationary toolbox border and ordinary-tab content outline/shadow are removed only in custom mode. Split-view focus outlines retain native styling.
 
-## Document navigation peeks
+## Site and tab context peeks
 
-A per-window tabs-progress listener receives the originating browser explicitly. A weak set tracks active top-level network loads per browser. The first network START peeks the address bar and tabs only if that browser is selected; network STOP clears the load marker without revealing it. Location callbacks never reveal either bar. This keeps same-document fragments and History API updates quiet, and gives a server redirect chain one original reveal per bar rather than a fresh peek for every address or completion event.
+A per-window tabs-progress listener receives the originating browser explicitly. A weak map stores the last committed HTTP(S) site for each browser. The site key uses `Services.eTLD.getBaseDomain`, falling back to the exact ASCII host for IP addresses and local hosts; scheme and port are deliberately ignored. Top-level location callbacks update context, including background and history navigations. Non-web destinations reset that context without automatic reveal.
 
-Background loads update their bookkeeping without revealing over the selected tab. Subframes are ignored. A later separate document load gets another peek, including reload and different-document Back/Forward. Tab activity remains a separate trigger. Both temporary bars now use the same document-load threshold; neither reveals for same-document URL changes or load completion. Explicit address focus still holds the bar and starts a grace period on blur.
+Only a foreground, different-site destination reveals the address bar. `LOCATION_CHANGE_SAME_DOCUMENT`, reload, session-store and error-page flags suppress automatic reveals, as do `webProgress.loadType` history/reload commands. This handles full documents, SPA updates, hashes, redirects and cross-site Back/Forward without guessing from URL text. Comparing confirmed destinations avoids showing intermediate server redirects or restarting the timer at completion. The browser contracts are documented in Mozilla's [progress interface](https://github.com/mozilla-firefox/firefox/blob/main/uriloader/base/nsIWebProgress.idl) and [location-change flags](https://github.com/mozilla-firefox/firefox/blob/main/uriloader/base/nsIWebProgressListener.idl).
+
+Tab open/close/select/move/pin/group and session-restoring events reveal only tabs. Duplicate and restored tabs use the native tab/session-store events. Page navigation never calls the tab reveal function. Browser progress bookkeeping never moves focus or changes pinned choices. Ctrl+L/address focus still holds the address bar, followed by a grace period on blur.
 
 ## Ranking and recency
 

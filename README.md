@@ -70,19 +70,22 @@ A bar command issued from the normal browser enters custom Focus Mode while pres
 
 ## When the address bar and tabs peek
 
-| Event | Address-bar and tabs behavior |
-|---|---|
-| New foreground document or reload | One peek at load start |
-| HTTP redirects within that load | Same peek; timer is not restarted |
-| Load completes | No additional peek |
-| Fragment (`#section`) change | No peek |
-| `pushState` / `replaceState`, including path/query changes | No peek |
-| Back/Forward within the same document | No peek |
-| Back/Forward to another document | A new document-navigation peek |
-| Background-tab or subframe document loads | No peek over the current page |
-| Ctrl+L / focusing the address field | Reveal the address bar only; hold while focused, then the normal grace period |
+| Event | Address bar | Tab bar |
+|---|---|---|
+| Foreground navigation to a different website | One peek when the destination is confirmed | Hidden |
+| Full document navigation within the same website | Hidden | Hidden |
+| SPA navigation, History API or hash changes | Hidden | Hidden |
+| Reload, including one that redirects | Hidden | Hidden |
+| Back/Forward, even across websites | Hidden | Hidden |
+| HTTP redirect chain | Compare the final website; one peek at most | Hidden |
+| Background-tab or subframe navigation | Hidden | Hidden |
+| Open, close, switch, duplicate or restore a tab | No automatic address peek | Peek |
+| Move, pin, unpin or group tabs | No automatic address peek | Peek |
+| Ctrl+L / focusing the address field | Reveal and hold while focused | Hidden |
 
-Both bars use the same navigation threshold. Their default peek lasts two seconds from load start, even if loading or redirects take longer. Tab interaction can hold the tabs open independently. A later independent document navigation gets its own peek. Tab opening/closing/switching and the explicit `address` commands keep their existing behavior; these are separate triggers from navigation.
+A website means its registrable domain, using the browser's public suffix service: `www.example.com` and `account.example.com` share a site, while `example.com` and `example.org` differ. Scheme and port changes alone do not change site context. IP addresses and local hostnames fall back to their exact host. Only HTTP(S) destinations trigger automatic site reveals; internal and local-file tabs retain explicit address access.
+
+Site context is tracked separately per tab and updated silently on history, reloads and background loads. Switching tabs does not cause a delayed address peek. Redirect destinations are compared when committed, rather than revealing provisional intermediate sites. A confirmed site peek lasts two seconds; completion does not restart it. Tab interaction can hold tabs open independently. Explicitly pinned bars remain visible, and the address field retains its normal grace period after focus leaves it. Browser new-tab UI can focus the address field itself, which also reveals it.
 
 ## Command-line behavior
 
