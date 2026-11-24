@@ -27,35 +27,20 @@
   let matches = [], selected = 0, previous = null, browser = null, timer;
   let completionMatches = null, completionIndex = -1;
   const normalize = text => text.trim().replace(/\s+/g, ' ').toLowerCase();
-  function bar(which, action) {
+  function bar(which) {
     const mode = window.FocusMode;
-    if (!mode.state.enabled) {
-      // Starting from normal mode preserves the other bar's visible state.
-      mode.state.addressPinned = true; mode.state.tabsVisible = true; mode.enable();
-    }
     const address = which === 'address';
-    const property = address ? 'addressPinned' : 'tabsVisible';
-    const toggle = () => address ? mode.toggleAddress() : mode.toggleTabs();
-    if (action === 'toggle') toggle();
-    else if (action === 'peek') {
-      address ? mode.setAddressPinned(false) : mode.setTabsVisible(false);
-      address ? mode.reveal('command line') : mode.revealTabs('command line');
-    } else {
-      address ? mode.setAddressPinned(action === 'show') : mode.setTabsVisible(action === 'show');
-    }
-    return (address ? 'Address bar' : 'Tabs') + (action === 'peek' ? ' revealed temporarily' :
-      mode.state[property] ? ' pinned' : ' hidden');
+    address ? mode.toggleAddress() : mode.toggleTabs();
+    return (address ? 'Address bar' : 'Tabs') +
+      (mode.state[address ? 'addressPinned' : 'tabsVisible'] ? ' pinned' : ' hidden');
   }
   const commands = [
-    {name:'focus on', description:'Enable custom Focus Mode', run:() => { FocusMode.enable(); return 'Focus Mode on'; }},
-    {name:'focus off', description:'Restore the normal browser', run:() => { FocusMode.normal(); return 'Normal browser restored'; }},
     {name:'focus toggle', description:'Toggle custom Focus Mode', run:() => { FocusMode.toggle(); return 'Focus Mode ' + (FocusMode.state.enabled ? 'on' : 'off'); }},
-    ...['address', 'tabs'].flatMap(which => ['show','hide','toggle','peek'].map(action => ({
-      name: which + ' ' + action,
-      description: ({show:'Pin', hide:'Hide', toggle:'Toggle pinning of', peek:'Temporarily reveal'})[action] +
-        (which === 'address' ? ' the address bar' : ' the tabs bar'),
-      run: () => bar(which, action),
-    }))),
+    ...['address', 'tabs'].map(which => ({
+      name: which + ' toggle',
+      description: 'Toggle pinning of' + (which === 'address' ? ' the address bar' : ' the tabs bar'),
+      run: () => bar(which),
+    })),
   ];
   const recentPref = 'user.focusMode.commandLine.recentCommands';
   function recentCommands() {

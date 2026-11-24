@@ -54,29 +54,31 @@ try:
   context('content');m.cmd('WebDriver:Navigate',{'url':url});time.sleep(1)
   context('content');keys(';:');check('plain punctuation no longer opens while browsing',not opened())
   openline()
-  context('chrome');check('all eleven commands offered',js("return document.querySelectorAll('.focus-command-option').length===11;"))
+  context('chrome');check('only three toggle commands offered',js("return document.querySelectorAll('.focus-command-option').length===3;"))
   check('command UI overlays without resizing content',js("return getComputedStyle(document.getElementById('focus-command-line')).position==='fixed';"))
-  keys('focus');keys('\ue015');keys('\ue007');check('Enter executes highlighted suggestion for incomplete input',not opened() and js('return !FocusMode.state.enabled;'))
-  openline();context('chrome');check('most recent command is the default suggestion',js('return document.querySelector(\'.focus-command-option[aria-selected="true"] strong\').textContent==="focus off";'))
-  keys('focus');keys('\ue004');context('chrome');check('Tab completes highlighted suggestion',js('return document.getElementById("focus-command-input").value==="focus off";'))
-  keys('\ue004');context('chrome');check('Tab cycles original matching suggestions',js('return document.getElementById("focus-command-input").value==="focus on";'))
+  keys('focus');keys('\ue007');check('Enter executes highlighted suggestion for incomplete input',not opened() and js('return !FocusMode.state.enabled;'))
+  openline();context('chrome');check('most recent command is the default suggestion',js('return document.querySelector(\'.focus-command-option[aria-selected="true"] strong\').textContent==="focus toggle";'))
+  keys('toggle');keys('\ue004');context('chrome');check('Tab completes highlighted suggestion',js('return document.getElementById("focus-command-input").value==="tabs toggle";'))
+  keys('\ue004');context('chrome');check('Tab cycles original matching suggestions',js('return document.getElementById("focus-command-input").value==="focus toggle";'))
   keys('\ue00c');check('Escape closes command line',not opened())
   context('chrome');check('Escape restores page focus',js('return document.activeElement===gBrowser.selectedBrowser;'))
   for text,assertion in [
-   ('focus off','!FocusMode.state.enabled'),('tabs hide','FocusMode.state.enabled && !FocusMode.state.tabsVisible && FocusMode.state.addressPinned'),
-   ('tabs show','FocusMode.state.tabsVisible'),('address hide','!FocusMode.state.addressPinned && FocusMode.state.tabsVisible'),
-   ('address show','FocusMode.state.addressPinned'),('address toggle','!FocusMode.state.addressPinned'),
-   ('tabs toggle','!FocusMode.state.tabsVisible'),('address peek','FocusMode.state.temporary && !FocusMode.state.addressPinned'),
-   ('tabs peek','FocusMode.state.tabsTemporary && !FocusMode.state.tabsVisible'),
-   ('focus toggle','!FocusMode.state.enabled'),('focus on','FocusMode.state.enabled')]:
+   ('tabs toggle','FocusMode.state.enabled && !FocusMode.state.tabsVisible && FocusMode.state.addressPinned'),
+   ('tabs toggle','FocusMode.state.tabsVisible'),('address toggle','!FocusMode.state.addressPinned && FocusMode.state.tabsVisible'),
+   ('address toggle','FocusMode.state.addressPinned'),('address toggle','!FocusMode.state.addressPinned'),
+   ('tabs toggle','!FocusMode.state.tabsVisible'),('focus toggle','!FocusMode.state.enabled'),
+   ('focus toggle','FocusMode.state.enabled')]:
    command(text);check(text+' executes',js('return '+assertion+';'));check(text+' dismisses command line',not opened())
-  for prefix,assertion in [('focus of','!FocusMode.state.enabled'),('focus t','FocusMode.state.enabled'),('address s','FocusMode.state.addressPinned'),('tabs h','!FocusMode.state.tabsVisible')]:
+  for prefix,assertion in [('focus t','!FocusMode.state.enabled'),('focus','FocusMode.state.enabled'),('address','FocusMode.state.addressPinned'),('tabs','FocusMode.state.tabsVisible')]:
    command(prefix);check('unique prefix '+prefix+' executes on Enter',not opened() and js('return '+assertion+';'))
-  command('address');check('Enter runs default selection for multiple matches',not opened())
+  command('toggle');check('Enter runs default selection for multiple matches',not opened())
   command('');check('Enter repeats the most recent command on empty input',not opened())
+  for removed in ['focus on','focus off','address show','address hide','address peek','tabs show','tabs hide','tabs peek']:
+   command(removed);check(removed+' is removed from menu',opened() and js('return document.querySelectorAll(".focus-command-option").length===0;'));keys('\ue00c')
   command('unknown');check('unknown command stays open',opened());context('chrome');keys('\ue00c')
-  command('address peek');command('address hide');context('chrome');check('address hide immediately clears temporary reveal',js('return !FocusMode.state.temporary && !document.documentElement.hasAttribute("focus-address-visible");'))
-  command('tabs peek');command('tabs hide');context('chrome');check('tabs hide immediately clears temporary reveal',js('return !FocusMode.state.tabsTemporary && !document.documentElement.hasAttribute("focus-tabs-visible");'))
+  for which in ['address','tabs']:
+   context('chrome');js('FocusMode.'+('setAddressPinned' if which=='address' else 'setTabsVisible')+'(true);FocusMode.'+('reveal' if which=='address' else 'revealTabs')+'("test");')
+   command(which+' toggle');check(which+' toggle to hidden clears temporary reveal',js('return !FocusMode.state.'+('temporary' if which=='address' else 'tabsTemporary')+' && !document.documentElement.hasAttribute("focus-'+which+'-visible");'))
   for selector in ['#text','#password','#area','#editable','#role','#select','#chat-composer']:
    context('chrome');js('gBrowser.selectedBrowser.focus();');pagefocus(selector);keys(';:')
    check('punctuation does not open command line in '+selector,not opened())
@@ -137,13 +139,13 @@ try:
    context('chrome');js('FocusCommandLine.open(); const i=document.getElementById("focus-command-input");i.value='+json.dumps(text)+';i.dispatchEvent(new Event("input"));')
   def value():return js('return document.getElementById("focus-command-input").value;')
   def chosen():return js('return document.querySelector(\'.focus-command-option[aria-selected="true"] strong\')?.textContent;')
-  for text,expected in [('adr sh','address show'),('tbpk','tabs peek'),('FOCUS OF','focus off')]:
+  for text,expected in [('adr tg','address toggle'),('tbtg','tabs toggle'),('FOC TG','focus toggle')]:
    query(text);check('fuzzy query '+text+' ranks expected command first',chosen()==expected);keys('\ue00c')
-  command('address hide');query('adr sh');check('fuzzy match quality outranks recency',chosen()=='address show');keys('\ue00c')
-  command('tabs peek');query('');check('successful execution moves command to top',chosen()=='tabs peek');keys('\ue007');check('Enter with empty query repeats default selection',not opened())
-  context('chrome');saved=js('return Services.prefs.getStringPref("user.focusMode.commandLine.recentCommands");');check('recency stores command names only',all(isinstance(n,str) and n in ['focus on','focus off','focus toggle']+[a+' '+b for a in ['address','tabs'] for b in ['show','hide','toggle','peek']] for n in json.loads(saved)))
-  js('FocusCommandLine.destroy();Services.scriptloader.loadSubScript("resource://custom-focus-mode/command-line.js",window,"UTF-8");');query('');check('recency survives reloading command UI',chosen()=='tabs peek');keys('\ue00c')
-  query('tabs');before=value();chord('n');check('Ctrl+N moves selection without changing input',chosen()!='tabs peek' and value()==before);chord('p');check('Ctrl+P returns to previous selection',chosen()=='tabs peek' and value()==before);keys('\ue00c')
+  command('tabs toggle');query('adr tg');check('fuzzy match quality outranks recency',chosen()=='address toggle');keys('\ue00c')
+  command('tabs toggle');query('');check('successful execution moves command to top',chosen()=='tabs toggle');keys('\ue007');check('Enter with empty query repeats default selection',not opened())
+  context('chrome');saved=js('return Services.prefs.getStringPref("user.focusMode.commandLine.recentCommands");');check('recency stores command names only',all(isinstance(n,str) and n in ['focus toggle','address toggle','tabs toggle'] for n in json.loads(saved)))
+  js('FocusCommandLine.destroy();Services.scriptloader.loadSubScript("resource://custom-focus-mode/command-line.js",window,"UTF-8");');query('');check('recency survives reloading command UI',chosen()=='tabs toggle');keys('\ue00c')
+  query('toggle');before=value();chord('n');check('Ctrl+N moves selection without changing input',chosen()!='tabs toggle' and value()==before);chord('p');check('Ctrl+P returns to previous selection',chosen()=='tabs toggle' and value()==before);keys('\ue00c')
   query('');keys('address show');count=js('return gBrowser.tabs.length;');chord('w');check('Ctrl+W deletes previous whitespace-separated word',value()=='address ');check('Ctrl+W does not close a tab',js('return gBrowser.tabs.length;')==count)
   chord('z');check('Ctrl+Z undoes word deletion',value()=='address show');js('const i=document.getElementById("focus-command-input");i.setSelectionRange(i.value.length,i.value.length);');chord('u');check('Ctrl+U deletes to beginning',value()=='');check('Ctrl+U does not open source tab',js('return gBrowser.tabs.length;')==count)
   keys('tabs peek');chord('h');check('Ctrl+H deletes previous character',value()=='tabs pee');check('Ctrl+H keeps command line focused',js('return document.activeElement.id==="focus-command-input";'))

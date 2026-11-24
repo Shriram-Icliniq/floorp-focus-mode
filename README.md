@@ -52,7 +52,7 @@ python3 install.py install \
   --profiles /path/to/first-profile /path/to/second-profile
 ```
 
-Restart Floorp. Click a page, press `:`, and type a command such as `address show` or `focus off`. With the field empty, **Enter runs the highlighted default command**.
+Restart Floorp. Click a page, press **Ctrl+;**, and type a command such as `address toggle` or `focus toggle`. With the field empty, **Enter runs the highlighted default command**.
 
 The installer copies runtime assets to `RUNTIME/custom-focus-mode-assets`. This keeps content-side actor modules inside the browser runtime, where its process sandbox can load them. Override this only with another runtime subdirectory using `--data-dir /path/to/floorp/assets`. The repository clone can move after installation because the browser loads the installed copy. Local edits in the installed asset directory are backed up on reinstall; edit `src/` and reinstall to make repository changes active.
 
@@ -62,19 +62,11 @@ The installer adds two AutoConfig files to the runtime and an activation marker 
 
 | Command | Result |
 |---|---|
-| `focus on` | Enable custom Focus Mode, retaining saved bar choices |
-| `focus off` | Restore the normal browser, also exiting native Zen |
-| `focus toggle` | Toggle custom Focus Mode |
-| `address show` | Pin the address bar |
-| `address hide` | Unpin and hide the address bar and separator |
-| `address toggle` | Toggle address-bar pinning |
-| `address peek` | Unpin and reveal the address bar temporarily |
-| `tabs show` | Pin the horizontal strip or native vertical tab rail |
-| `tabs hide` | Unpin and hide tabs |
-| `tabs toggle` | Toggle tab pinning |
-| `tabs peek` | Unpin and reveal tabs temporarily |
+| `focus toggle` | Toggle custom Focus Mode; turning it off restores the normal browser |
+| `address toggle` | Toggle address-bar pinning; unpinning hides the bar and separator |
+| `tabs toggle` | Toggle pinning of the horizontal strip or native vertical tab rail |
 
-A bar command issued from the normal browser enters custom Focus Mode while preserving the other bar's visible state. For example, `tabs hide` hides tabs and leaves the address bar pinned. `peek` explicitly unpins that bar so it can hide again after its timer.
+A bar command issued from the normal browser enters custom Focus Mode while preserving the other bar's visible state. For example, `tabs toggle` hides tabs and leaves the address bar pinned. The menu contains these three toggles only; on/off, show/hide and temporary peek commands have been removed. Old command names in saved recency are ignored.
 
 ## When the address bar and tabs peek
 
@@ -98,7 +90,7 @@ Both bars use the same navigation threshold. Their default peek lasts two second
 - On `about:` pages, **Ctrl+Shift+Period** also opens the command line as an alternate shortcut.
 - **Enter executes the highlighted suggestion**, including with an empty or incomplete query. If nothing matches, the line stays open for correction.
 - Empty input lists the most recently executed commands first. Only known command names are saved, separately per profile; raw search queries and page data are not stored.
-- Search is fuzzy and case-insensitive: `adr sh` finds `address show`; `tbpk` finds `tabs peek`. Match quality ranks first; recency breaks ties.
+- Search is fuzzy and case-insensitive: `adr tg` finds `address toggle`; `tbtg` finds `tabs toggle`. Match quality ranks first; recency breaks ties.
 - A changed query selects the top result. Up/Down or Ctrl+P/Ctrl+N moves the highlight without changing the query. Tab/Shift+Tab completes and cycles matches. Clicking a result completes it without running it.
 - Execution closes the line and briefly confirms the result. Escape/Ctrl+C cancels and returns focus to the page. Switching tabs or moving focus elsewhere dismisses the line.
 

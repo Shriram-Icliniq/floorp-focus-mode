@@ -45,7 +45,7 @@ Background loads update their bookkeeping without revealing over the selected ta
 
 ## Ranking and recency
 
-The fixed catalogue contains eleven known commands. Fuzzy matching uses ordered characters and favors word starts and contiguous matches. Exact names outrank prefixes; aligned query words receive a bonus. Relevance ranks before recency; recency breaks ties; the catalogue order resolves remaining ties.
+The fixed catalogue contains three commands: `focus toggle`, `address toggle` and `tabs toggle`. The menu uses the existing mode/bar toggle methods; redundant on/off, show/hide and temporary peek entries are removed. Saved recency filters out retired names. Fuzzy matching uses ordered characters and favors word starts and contiguous matches. Exact names outrank prefixes; aligned query words receive a bonus. Relevance ranks before recency; recency breaks ties; the catalogue order resolves remaining ties.
 
 The empty query uses most-recent-first ordering. A successful command moves to the front of the per-profile list; cancellation, merely selecting a row, and unmatched input do not record usage. Input queries are not saved. Enter runs the highlighted row, even for empty or partial input. If there is no row, it reports no match and stays open.
 

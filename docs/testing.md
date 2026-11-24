@@ -52,4 +52,6 @@ On 22 November 2026, the modal-visibility fix passed **124 command-line checks a
 
 On 23 November 2026, switching command entry to **Ctrl+;** passed **135 command-line checks and 12 installer tests** with the optional Vimium C XPI. The suite verifies entry from focused fields, rich editors, closed shadow inputs, iframe inputs and a design-mode iframe with an invisible caret, plus modal guards, plain punctuation, native editing, Vimium coexistence and tab protocols. A signed-in live Google Docs document was not tested. Navigation/layout suites were not rerun for this keyboard-only change.
 
+On 24 November 2026, simplifying the menu to three toggles passed **137 command-line checks and 12 installer tests**, including Vimium C coexistence. Coverage includes both directions of each toggle, entering custom mode from the normal browser, removal of the eight retired commands, clearing temporary reveals on unpinning, fuzzy matching, recency, completion and editor shortcut handling. Navigation reveal behavior was not changed in this update, and navigation/layout suites were not rerun.
+
 GitHub Actions runs the fast checks on pushes and pull requests. It does not download Floorp, fetch extensions, launch a signed-in browser, or publish generated reports.
