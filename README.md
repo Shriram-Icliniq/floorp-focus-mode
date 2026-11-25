@@ -117,6 +117,10 @@ The binding uses the semicolon character with Ctrl only; Shift, Alt and Meta com
 
 Editor focus is deliberately allowed: a hidden caret does not reliably mean a document editor has released keyboard focus. This addresses the focus restriction encountered with Google Docs; automated tests cover focused iframe/design-mode editors with invisible carets, rather than a signed-in live Google Docs document.
 
+### Numbered tab shortcuts
+
+Both opted-in profiles use **Ctrl+1–8** to select the corresponding tab position and **Ctrl+9** to select the last tab. These native browser commands work with Focus Mode on or off and with horizontal or vertical tabs. They replace this Linux build's Alt+number bindings. Tab selection reveals the tab bar according to the tab-context rules above.
+
 ### Native palette
 
 Ctrl+Shift+P still opens Floorp's native palette. Search for **Focus Mode** to access the original five custom actions. This binding replaces the browser's Private Window shortcut; Private Window remains available from the browser menu. Ctrl+Alt+Z is not installed by this package; native shortcut configuration remains yours to manage.

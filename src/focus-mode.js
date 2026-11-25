@@ -284,6 +284,19 @@
       }
       apply();
       Services.scriptloader.loadSubScript("resource://custom-focus-mode/command-line.js", window, "UTF-8");
+      // Use the native numbered-tab commands with Ctrl on the supported Linux
+      // build. Keep this active in normal mode too, for every opted-in profile.
+      for (const id of [...Array.from({length:8}, (_, i) => "key_selectTab" + (i + 1)),
+        "key_selectLastTab"]) {
+        const tabKey = document.getElementById(id);
+        if (!tabKey) continue;
+        const previousModifiers = tabKey.getAttribute("modifiers");
+        tabKey.setAttribute("modifiers", "accel");
+        cleanup.push(() => {
+          if (previousModifiers === null) tabKey.removeAttribute("modifiers");
+          else tabKey.setAttribute("modifiers", previousModifiers);
+        });
+      }
       // A real XUL binding, rather than synthetic page keystrokes. Preserve the
       // private-window menu command, but give the chosen key to the palette.
       const nativeKey = document.getElementById("key_privatebrowsing");

@@ -45,6 +45,10 @@ Only a foreground, different-site destination reveals the address bar. `LOCATION
 
 Tab open/close/select/move/pin/group and session-restoring events reveal only tabs. Duplicate and restored tabs use the native tab/session-store events. Page navigation never calls the tab reveal function. Browser progress bookkeeping never moves focus or changes pinned choices. Ctrl+L/address focus still holds the address bar, followed by a grace period on blur.
 
+## Native numbered-tab keys
+
+At initialization, the shared window customization changes the existing `key_selectTab1` through `key_selectTab8` and `key_selectLastTab` modifiers from Linux's Alt to `accel` (Ctrl on the supported build). Native command handlers and their positional/last-tab behavior are retained. The bindings apply to every opted-in profile and remain installed when custom mode is toggled off. Teardown restores each key's original modifiers.
+
 ## Ranking and recency
 
 The fixed catalogue contains three commands: `focus toggle`, `address toggle` and `tabs toggle`. The menu uses the existing mode/bar toggle methods; redundant on/off, show/hide and temporary peek entries are removed. Saved recency filters out retired names. Fuzzy matching uses ordered characters and favors word starts and contiguous matches. Exact names outrank prefixes; aligned query words receive a bonus. Relevance ranks before recency; recency breaks ties; the catalogue order resolves remaining ties.
